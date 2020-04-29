@@ -4,4 +4,4 @@
 ## Creating inverted index 
 
 
-###Created by Anton Korol
+### Created by Anton Korol
