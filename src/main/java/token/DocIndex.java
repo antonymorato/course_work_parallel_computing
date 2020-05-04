@@ -11,7 +11,7 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 public class DocIndex {
-    private String[] terms;
     private String docID;
+    private String[] terms;
 
 }
