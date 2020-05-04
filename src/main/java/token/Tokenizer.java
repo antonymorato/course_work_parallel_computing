@@ -30,6 +30,7 @@ public class Tokenizer {
     private String readFile(Charset encoding) throws IOException, URISyntaxException {
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         URL url = classloader.getResource(this.fileName);
+        System.out.println("file:"+this.fileName);
         byte[] encoded = Files.readAllBytes(Paths.get(url.toURI()));
         return new String(encoded, encoding);
     }
@@ -63,6 +64,11 @@ public class Tokenizer {
         this.fileContents = this.fileContents.replaceAll("\\,*", "");
         this.fileContents = this.fileContents.replaceAll("\\.*", "");
     };
+
+    public Tokenizer(String fileName) {
+        this.fileName = fileName;
+    }
+
     private void splitFileContents() {
         // Consists of docId and list of all documents
         this.documentList = new ArrayList<DocIndex>();
@@ -76,7 +82,7 @@ public class Tokenizer {
 
         //For each word in the news.
         for (String tokens : news) {
-            String docID = parseDocumentID(tokens.split("\n")[0]);
+            String docID = parseDocumentID(this.fileName);
            // tokens = Jsoup.clean(tokens, Whitelist.none());
             tokens = cleanToken(tokens);
 
@@ -122,8 +128,7 @@ public class Tokenizer {
 
 
     private static String parseDocumentID(String fileName) {
-        String res=fileName.replaceAll("[^0-9]","");
 
-        return res;
+        return fileName.substring(0,fileName.indexOf('_'));
     }
 }
