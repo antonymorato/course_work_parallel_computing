@@ -6,7 +6,6 @@ import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -20,23 +19,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class Tokenizer {
 
+    //TODO add stopwords remove
+
     private String fileName;
     private String fileContents;
+    private String filePath;
 
     private List<DocIndex> documentList;
 
 
 
     private String readFile(Charset encoding) throws IOException, URISyntaxException {
-        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        URL url = classloader.getResource(this.fileName);
-        System.out.println("file:"+this.fileName);
-        byte[] encoded = Files.readAllBytes(Paths.get(url.toURI()));
+
+
+        byte[] encoded = Files.readAllBytes(Paths.get(this.filePath));
         return new String(encoded, encoding);
     }
-    /**
-     * Reads the files with reuters news    
-     */
+
     public void readDocuments() {
         String fileContents = "";
         try {
@@ -65,8 +64,11 @@ public class Tokenizer {
         this.fileContents = this.fileContents.replaceAll("\\.*", "");
     };
 
-    public Tokenizer(String fileName) {
-        this.fileName = fileName;
+    public Tokenizer(String filePath) {
+
+        this.fileName =filePath.substring(filePath.lastIndexOf('\\')+1,filePath.length()) ;
+        this.filePath=filePath;
+
     }
 
     private void splitFileContents() {
@@ -113,6 +115,9 @@ public class Tokenizer {
         tokens = tokens.replaceAll("'", "");
         tokens = tokens.replaceAll("&amp;", "");
         tokens = tokens.replaceAll("-", "");
+        tokens=tokens.replaceAll("br","");
+        tokens=tokens.replaceAll("[\\<\\`\\=\\>\\/\\&\\?\\$\\!\\@\\#\\:\\%\\;\\_\\]\\[]","");
+
         return tokens;
     }
 
@@ -129,6 +134,6 @@ public class Tokenizer {
 
     private static String parseDocumentID(String fileName) {
 
-        return fileName.substring(0,fileName.indexOf('_'));
+        return fileName.substring(0,fileName.indexOf(".txt"));
     }
 }
