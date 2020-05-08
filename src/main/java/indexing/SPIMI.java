@@ -103,9 +103,7 @@ public class SPIMI {
 
 
                  postingsList.add(docID);
-//                postingsList.add(String.parseInt(
-//                        docID.substring(0,docID.length()-2)+
-//                                docID.substring(docID.length()-1,docID.length())));
+
             }
 
 
@@ -258,7 +256,7 @@ public class SPIMI {
         Iterator<String> iter2 = keys2.iterator();
 
         // Get list iterators and fetch first value from each, if available
-        List<String> merged = new ArrayList<String>();
+        List<String> merged = new ArrayList<>();
 
         String value1 = (iter1.hasNext() ? iter1.next() : null);
         String value2 = (iter2.hasNext() ? iter2.next() : null);
