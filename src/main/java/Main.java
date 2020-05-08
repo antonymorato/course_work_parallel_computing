@@ -9,13 +9,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Spliterator;
+import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
     private static int THREADS=5;
+    private static Scanner scanner=new Scanner(System.in);
+
     public static void main(String[] args) {
 
 
@@ -32,6 +34,39 @@ public class Main {
         }
 
     }
+
+    public static void menu(){
+
+        for (;;){
+            short choice;
+            System.out.println("MENU");
+            System.out.println("1.Change number of threads.");
+            System.out.println("2.Run SPIMI");
+            System.out.println("3.EXIT");
+            choice=getChoice();
+
+            switch (choice){
+                case 3:System.exit(1);
+                default:
+                    System.out.println("Wrong enter, repeat please");
+            }
+
+        }
+
+
+
+    }
+
+    public static String getPath(){
+        System.out.println("Enter path to \"acl\" directory:");
+
+        return scanner.nextLine();
+    }
+    public static short getChoice(){
+        System.out.println("Enter your choice:");
+        return scanner.nextShort();
+    }
+
 
     public static List<DocIndex> tokenizeAllDocuments() throws InterruptedException {
 
