@@ -19,19 +19,9 @@ public class Main {
     private static Scanner scanner=new Scanner(System.in);
 
     public static void main(String[] args) {
+        menu();
 
 
-        try {
-
-            List<DocIndex> documents=tokenizeAllDocuments();
-            runSPIMIalgorithm(documents);
-
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
     }
 
@@ -41,12 +31,16 @@ public class Main {
             short choice;
             System.out.println("MENU");
             System.out.println("1.Change number of threads.");
-            System.out.println("2.Run SPIMI");
-            System.out.println("3.EXIT");
+            System.out.println("2.Change \"acllmdb\" directory");
+            System.out.println("3.Run SPIMI");
+            System.out.println("4.EXIT");
             choice=getChoice();
 
             switch (choice){
-                case 3:System.exit(1);
+                case 1:THREADS=getThreads();
+                case 2:FileUtil.setAclPath(getPath());
+                case 3:start();
+                case 4:System.exit(1);
                 default:
                     System.out.println("Wrong enter, repeat please");
             }
@@ -57,10 +51,29 @@ public class Main {
 
     }
 
+    public static void start() {
+        try {
+            List<DocIndex> documents=tokenizeAllDocuments();
+            runSPIMIalgorithm(documents);
+
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static int getThreads()
+    {
+        System.out.println("Enter number of threads you wish to use:");
+        return scanner.nextInt();
+    }
     public static String getPath(){
+        System.out.println("Current path:"+FileUtil.getAclPath());
         System.out.println("Enter path to \"acl\" directory:");
 
-        return scanner.nextLine();
+        return scanner.next();
     }
     public static short getChoice(){
         System.out.println("Enter your choice:");
@@ -105,40 +118,41 @@ public class Main {
 //        Spliterator<DocIndex> spliterator= documents.spliterator();
 //        spliterator.
 
-        //SPIMI spimi = new SPIMI(650000, 650000);
+        SPIMI spimi = new SPIMI(650000, 650000);
 
 
-//        Iterator<DocIndex> documentStream = documents.iterator();
-//        spimi.setDocIndexStream(documentStream);
-//
-//        while (documentStream.hasNext()) {
-//            spimi.SPIMIInvert();
-//        }
-//
-//
-////         This will write the dictionary to disk.
-//        spimi.mergeAllBlocks();
-        ExecutorService es = Executors.newCachedThreadPool();
+        Iterator<DocIndex> documentStream = documents.iterator();
+        spimi.setDocIndexStream(documentStream);
 
-        long end=System.nanoTime();
-        for (int i = 0; i <THREADS ; i++) {
-                final int iterator=i;
-
-            Runnable task = () -> {
-                SPIMI spimi = new SPIMI(650000, 650000);
-                List<List<DocIndex>> sublists = Lists.partition(documents, THREADS);
-                Iterator<DocIndex> documentStream = sublists.get(iterator).iterator();
-                spimi.setDocIndexStream(documentStream);
-
-                while (documentStream.hasNext()) {
-                        spimi.SPIMIInvert();
-                     }
-            };
-            es.execute(task);
+        while (documentStream.hasNext()) {
+            spimi.SPIMIInvert();
         }
-        es.shutdown();
-        @SuppressWarnings("unused")
-        boolean finished = es.awaitTermination(1, TimeUnit.MINUTES);
+
+
+//         This will write the dictionary to disk.
+        spimi.mergeAllBlocks();
+//        ExecutorService es = Executors.newCachedThreadPool();
+//        List<List<DocIndex>> sublists = Lists.partition(documents, THREADS);
+//
+//        final int block=1;
+//        long end=System.nanoTime();
+//        for (int i = 0; i <sublists.size(); i++) {
+//            final int iterator=i;
+//
+//            Runnable task = () -> {
+//                SPIMI spimi = new SPIMI(650000, 650000,block+iterator*THREADS);
+//                Iterator<DocIndex> documentStream = sublists.get(iterator).iterator();
+//                spimi.setDocIndexStream(documentStream);
+//
+//                while (documentStream.hasNext()) {
+//                        spimi.SPIMIInvert();
+//                     }
+//            };
+//            es.execute(task);
+//        }
+//        es.shutdown();
+//        @SuppressWarnings("unused")
+//        boolean finished = es.awaitTermination(1, TimeUnit.MINUTES);
 
     }
 }
