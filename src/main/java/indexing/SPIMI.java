@@ -3,7 +3,9 @@ package indexing;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.log4j.Logger;
 import token.DocIndex;
+import util.GlobalConst;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,6 +18,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.List;
 
@@ -27,24 +32,29 @@ public class SPIMI {
 
     private int blockSize;
     private int memorySize;
-    private int blockNumber;
+
+    private AtomicInteger blockNumber;
     private Iterator<DocIndex> DocIndexStream;
-    private Map<String,List<String>> dictionary;
-
-
+    private volatile Map<String,List<String>> dictionary;
     private List<String> blockPostingsList;
 
+    private Logger logger;
 
-    public SPIMI(int blockSize, int memorySize){
+    {
+        logger=Logger.getLogger(SPIMI.class);
+    }
+
+    public SPIMI(int blockSize, int memorySize,AtomicInteger blockNumber){
         this.blockSize = blockSize;
         this.memorySize = memorySize;
+        this.blockNumber=blockNumber;
     }
 
 
 
 
     //here create a new postings list and add the docID to it.
-    public List<String> addToDictionary(Map<String,List<String>> dictionary,String term){
+    public synchronized List<String> addToDictionary(Map<String,List<String>> dictionary,String term){
         List<String> postingsList = new ArrayList<String>();
         dictionary.put(term,postingsList);
         return postingsList;
@@ -59,7 +69,7 @@ public class SPIMI {
     /**
      * Spimi invert algorithm implementation
      */
-    public void SPIMIInvert(){
+    public void SPIMIInvert() {
 
         //Setting the initial memory
         int initialMemory = (int) java.lang.Runtime.getRuntime().freeMemory();
@@ -67,8 +77,9 @@ public class SPIMI {
 
         Map<String, List<String>> dictionary = new LinkedHashMap<String, List<String>>();
 
+        ExecutorService es= Executors.newCachedThreadPool();
         //Checking with the memory limitation and with the document stream.
-        while(usedMemory<this.memorySize && this.DocIndexStream.hasNext()){
+        while(usedMemory<this.memorySize && this.DocIndexStream.hasNext()) {
 
             //Setting the current memory for the memory limitation
             int currentMemory = (int) java.lang.Runtime.getRuntime().freeMemory();
@@ -81,35 +92,32 @@ public class SPIMI {
 
             //Looping through all the terms
             for (int i = 0; i < terms.length; i++) {
-
-                // note that our postings list is a list of Strings.
-                //our postings list variable
+//
+//                // note that our postings list is a list of Strings.
+//                //our postings list variable
 //                List<String> postingsList;
-
+//
                 List<String> postingsList;
-
-                //Getting the current term
+//
+//                //Getting the current term
                 String term = terms[i];
-
-                //If we did not add the term, we create a new postings list and link it to our variable,else we just add it to the entry.
+//
+//                //If we did not add the term, we create a new postings list and link it to our variable,else we just add it to the entry.
                 if (dictionary.get(term) == null) {
                     postingsList = this.addToDictionary(dictionary, term);
                 } else {
                     postingsList = dictionary.get(term);
                 }
+//
+//                //instead of doubling the size when full, we use arrayList's implemented size increasing alogrithm
+//                //adding the posting to the list.
 
-                //instead of doubling the size when full, we use arrayList's implemented size increasing alogrithm
-                //adding the posting to the list.
 
-
-                 postingsList.add(docID);
-
+                    postingsList.add(docID);
             }
 
 
-
         }
-
         //We now sort and write the block to disk.
         sortAndWriteBlockToFile(dictionary);
 
@@ -122,10 +130,10 @@ public class SPIMI {
         this.dictionary = new LinkedHashMap<String,List<String>>();
 
         //Looping through all our written blocks
-        for(int i = 1;i<this.blockNumber;i++){
+        for(int i = 1;i<this.blockNumber.get();i++){
 
             //Getting the current block
-            Map<String,List<String>> blockDictionary = this.readBlockAndConvertToDictionary("block"+i+".txt");
+            Map<String,List<String>> blockDictionary = this.readBlockAndConvertToDictionary(GlobalConst.outFilesPath+"block"+i+".txt");
 
             //for debug
             //System.out.println("block dictionary size : " + blockDictionary.size());
@@ -331,10 +339,10 @@ public class SPIMI {
      * Writing dict at the end of merging. no sorting here
      * @param dictionary
      */
-    private void writeDictionary(Map<String,List<String>> dictionary){
-        this.blockNumber++;
+    private synchronized void writeDictionary(Map<String,List<String>> dictionary){
+        this.blockNumber.incrementAndGet();
 
-        Path file = Paths.get("dictionary.txt");
+        Path file = Paths.get(GlobalConst.outFilesPath+"dictionary.txt");
 
         dictionary.remove("");
 
@@ -350,7 +358,7 @@ public class SPIMI {
         try {
             Files.write(file, lines);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
         }
     }
 
@@ -358,28 +366,32 @@ public class SPIMI {
      * Sorting and writing to disk each block (before merge)
      * @param dictionary
      */
-    private void sortAndWriteBlockToFile(Map<String,List<String>> dictionary){
-        this.blockNumber++;
+    private synchronized void sortAndWriteBlockToFile(Map<String,List<String>> dictionary){
+        int blockNumber=this.blockNumber.incrementAndGet();
 
-        Path file = Paths.get("block"+this.blockNumber+".txt");
+        Path file = Paths.get(GlobalConst.outFilesPath+"block"+blockNumber+".txt");
 
+//        countstopwordsremoval();
         dictionary.remove("");
-
         List<String> keys = new ArrayList<String>(dictionary.keySet());
         Collections.sort(keys);
 
         List<String> lines = new ArrayList<String>();
         for(String key : keys){
-            Collections.sort(dictionary.get(key)); //sorting the postings list
-            String index = key + " : " + dictionary.get(key).toString();
-            lines.add(index);
 
+            if (dictionary.get(key)!=null) {
+                Collections.sort(dictionary.get(key)); //sorting the postings list
+                String index = key + " : " + dictionary.get(key).toString();
+                lines.add(index);
+            }
         }
         try {
             Files.write(file, lines);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
+//            e.printStackTrace();
         }
+//        System.out.println("Current block:"+blockNumber.getValue());
     }
 
     //Method to parse postings from line.
@@ -430,7 +442,7 @@ public class SPIMI {
 
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
         }
 
         return blockDictionary;

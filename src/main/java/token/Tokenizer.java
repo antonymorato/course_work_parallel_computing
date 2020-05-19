@@ -3,6 +3,7 @@ package token;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -27,7 +28,11 @@ public class Tokenizer {
 
     private List<DocIndex> documentList;
 
+    private Logger logger;
 
+    {
+        logger= Logger.getLogger(Tokenizer.class);
+    }
 
     private String readFile(Charset encoding) throws IOException, URISyntaxException {
 
@@ -42,11 +47,12 @@ public class Tokenizer {
             fileContents = this.readFile(Charset.forName("utf-8"));
             this.fileContents = fileContents;
             this.tokenizeDocument();
-            //TODO add logger
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
+            //e.printStackTrace();
         } catch (URISyntaxException use) {
-            use.printStackTrace();
+            logger.error(use);
+            //use.printStackTrace();
         }
 
     }
