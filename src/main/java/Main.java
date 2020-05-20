@@ -153,19 +153,19 @@ public class Main {
         // manage the pool of threads and start the SPIMI when we're done.
         ExecutorService es = Executors.newCachedThreadPool();
         final int NUM = NUMBER_OF_FILES / THREADS;
-        for (int i = 0; i < NUMBER_OF_FILES; i++) {
+        for (int i = 0; i < THREADS; i++) {
             final int iterator = i;
             Runnable task = () -> {
-//                for (int j = iterator; j <NUMBER_OF_FILES ; j+=THREADS) {
+                for (int j = iterator; j <NUMBER_OF_FILES ; j+=THREADS) {
 
 
 
 
-                    Tokenizer tokenizer = new Tokenizer(files[iterator].getAbsolutePath());
+                    Tokenizer tokenizer = new Tokenizer(files[j].getAbsolutePath());
                     tokenizer.readDocuments();
 
                     allDocuments.addAll(tokenizer.getDocumentList());
-//                }
+                }
                 };
             es.execute(task);
         }
@@ -176,36 +176,37 @@ public class Main {
 
         return allDocuments;
     }
+
     public static void runSPIMIalgorithm(List<DocIndex> documents) throws IOException, InterruptedException {
         StartSpimi=0;
         EndSpimi=0;
-        ExecutorService es = Executors.newCachedThreadPool();
-        List<List<DocIndex>> sublists = Lists.partition(documents, documents.size()/THREADS);
+//        ExecutorService es = Executors.newCachedThreadPool();
+//        List<List<DocIndex>> sublists = Lists.partition(documents, documents.size()/THREADS);
 
 //        IntHolder blockNumber=new IntHolder(0);
         AtomicInteger blockNumber=new AtomicInteger(0);
-        for (int i = 0; i <sublists.size(); i++) {
-            final int iterator=i;
+//        for (int i = 0; i <sublists.size(); i++) {
+//            final int iterator=i;
 
-            Runnable task = () -> {
-                SPIMI spimi = new SPIMI(6500, 6500,blockNumber);
-                Iterator<DocIndex> documentStream = sublists.get(iterator).iterator();
+//            Runnable task = () -> {
+                SPIMI spimi = new SPIMI(650000, 650000,blockNumber);
+                Iterator<DocIndex> documentStream = documents.iterator();
                 spimi.setDocIndexStream(documentStream);
 
                 while (documentStream.hasNext()) {
                         spimi.SPIMIInvert();
                      }
-            };
-            es.execute(task);
-        }
+//            };
+//            es.execute(task);
+//        }
 //        System.out.println("before shutdown");
         StartSpimi=System.nanoTime();
-        es.shutdown();
-        boolean finished = es.awaitTermination(1, TimeUnit.MINUTES);
+//        es.shutdown();
+//        boolean finished = es.awaitTermination(1, TimeUnit.MINUTES);
         EndSpimi=System.nanoTime();
 
 
-        SPIMI spimi=new SPIMI(0,0,blockNumber);
+//        SPIMI spimi=new SPIMI(0,0,blockNumber);
         spimi.mergeAllBlocks();
 //        System.out.println("after shutdown");
 
