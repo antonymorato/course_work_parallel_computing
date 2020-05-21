@@ -1,6 +1,7 @@
 import com.google.common.collect.Lists;
 import indexing.SPIMI;
 import org.apache.log4j.Logger;
+import query.QueryCommand;
 import token.DocIndex;
 import token.Tokenizer;
 import util.FileUtil;
@@ -44,7 +45,8 @@ public class Main {
             System.out.println("2.Change out .txt directory");
             System.out.println("3.Change \"acllmdb\" directory");
             System.out.println("4.Run SPIMI");
-            System.out.println("5.EXIT");
+            System.out.println("5.Run test queries");
+            System.out.println("6.EXIT");
             choice=getChoice();
 
             switch (choice){
@@ -65,6 +67,10 @@ public class Main {
                     break;
                 }
                 case 5:{
+                    performTestQueries();
+                    break;
+                }
+                case 6:{
                     System.exit(1);
                     break;
                 }
@@ -141,7 +147,29 @@ public class Main {
         System.out.println("Enter your choice:");
         return scanner.nextShort();
     }
+    public static void performTestQueries() {
 
+        SPIMI spimi = new SPIMI();
+
+        QueryCommand qc = new QueryCommand();
+        qc.setDictionary(spimi.readBlockAndConvertToDictionary("dictionary.txt"));
+
+        // NULL MEANS THERE ARE NO RESULTS!
+
+        // Uncomment this to test yourself.
+        //performTestQueries(qc); //designed by myself
+        //performProjectQueries(qc);
+        performQueries(qc);
+
+    }
+
+    public static void performQueries(QueryCommand qc) {
+
+
+        String testQuery = qc.performKeywordQuery("animal").toString();
+        System.out.println("Keyword query 'animal' result: " + testQuery);
+
+    }
 
     public static List<DocIndex> tokenizeAllDocuments() throws InterruptedException {
 
@@ -180,15 +208,10 @@ public class Main {
     public static void runSPIMIalgorithm(List<DocIndex> documents) throws IOException, InterruptedException {
         StartSpimi=0;
         EndSpimi=0;
-//        ExecutorService es = Executors.newCachedThreadPool();
-//        List<List<DocIndex>> sublists = Lists.partition(documents, documents.size()/THREADS);
+        StartSpimi=System.nanoTime();
 
-//        IntHolder blockNumber=new IntHolder(0);
         AtomicInteger blockNumber=new AtomicInteger(0);
-//        for (int i = 0; i <sublists.size(); i++) {
-//            final int iterator=i;
 
-//            Runnable task = () -> {
                 SPIMI spimi = new SPIMI(650000, 650000,blockNumber);
                 Iterator<DocIndex> documentStream = documents.iterator();
                 spimi.setDocIndexStream(documentStream);
@@ -196,19 +219,10 @@ public class Main {
                 while (documentStream.hasNext()) {
                         spimi.SPIMIInvert();
                      }
-//            };
-//            es.execute(task);
-//        }
-//        System.out.println("before shutdown");
-        StartSpimi=System.nanoTime();
-//        es.shutdown();
-//        boolean finished = es.awaitTermination(1, TimeUnit.MINUTES);
-        EndSpimi=System.nanoTime();
 
 
-//        SPIMI spimi=new SPIMI(0,0,blockNumber);
         spimi.mergeAllBlocks();
-//        System.out.println("after shutdown");
+        EndSpimi=System.nanoTime();
 
     }
 }

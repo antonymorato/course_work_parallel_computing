@@ -44,6 +44,9 @@ public class SPIMI {
         logger=Logger.getLogger(SPIMI.class);
     }
 
+    public SPIMI(){
+
+    }
     public SPIMI(int blockSize, int memorySize,AtomicInteger blockNumber){
         this.blockSize = blockSize;
         this.memorySize = memorySize;
@@ -166,13 +169,11 @@ public class SPIMI {
 
         }
 
-        //WRite the dictionary to file.
+        //Write the dictionary to file.
         this.writeDictionary(this.dictionary);
 
         //For compiling dictionary compression techniques table
         count(this.dictionary);
-        //countstopwordsremoval(this.dictionary,30);
-        //countstopwordsremoval(this.dictionary,150);
 
     }
 
@@ -196,6 +197,7 @@ public class SPIMI {
         System.out.println("Number of tokens : " + tokens);
     }
 
+    @Deprecated
     public static void countstopwordsremoval(Map<String,List<String>> mergedDict,int numberOfStopWords){
         int tokens = 0;
         int nonpositionalpostings = 0;
@@ -221,6 +223,7 @@ public class SPIMI {
 
     }
 
+    @Deprecated
     public static boolean isAStopWord(int numberOfStopWords,String term){
         String[] stopwords = { "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any",
                 "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both",
@@ -391,7 +394,6 @@ public class SPIMI {
             logger.error(e);
 //            e.printStackTrace();
         }
-//        System.out.println("Current block:"+blockNumber.getValue());
     }
 
     //Method to parse postings from line.
