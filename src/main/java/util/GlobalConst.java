@@ -8,6 +8,9 @@ public class GlobalConst {
     public static void setOutFilesPath(String outFilesPath) {
         GlobalConst.outFilesPath = outFilesPath;
     }
+    public static String aclPath="E:\\3_kurs\\2_semestr\\PO\\aclImdb";
+
+
 
     public static String outFilesPath="";
     public static final int FILES_TOTAL1 = 12500;
