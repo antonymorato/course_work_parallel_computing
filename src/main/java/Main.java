@@ -1,10 +1,9 @@
-import com.google.common.collect.Lists;
 import indexing.SPIMI;
 import org.apache.log4j.Logger;
 import query.QueryCommand;
 import token.DocIndex;
 import token.Tokenizer;
-import util.FileUtil;
+import util.FileReader;
 import util.GlobalConst;
 
 import java.io.File;
@@ -17,6 +16,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static util.GlobalConst.aclPath;
 
 public class Main {
     private static int THREADS;
@@ -59,7 +60,8 @@ public class Main {
                     break;
                 }
                 case 3: {
-                    FileUtil.setAclPath(getAclPath());
+//                    FileUtil.setAclPath(
+                            aclPath=getAclPath();
                     break;
                 }
                 case 4: {
@@ -87,7 +89,7 @@ public class Main {
     public static void start() {
         try {
             logger.info("New spimi.");
-            logger.info("acllmdb dir:"+FileUtil.getAclPath());
+            logger.info("acllmdb dir:"+aclPath);
 
             long startTokenizer=System.nanoTime();
             List<DocIndex> documents=tokenizeAllDocuments();
@@ -138,7 +140,7 @@ public class Main {
         return scanner.next();
     }
     public static String getAclPath(){
-        System.out.println("Current path:"+FileUtil.getAclPath());
+        System.out.println("Current path:"+aclPath);
         System.out.println("Enter path to \"acllmdb\" directory:");
 
         return scanner.next();
@@ -173,9 +175,9 @@ public class Main {
 
     public static List<DocIndex> tokenizeAllDocuments() throws InterruptedException {
 
-        File [] files= FileUtil.getFiles();
-
-        final int NUMBER_OF_FILES=files.length;
+//        File [] files= FileUtil.getFiles();
+        List<File> files= FileReader.collectAll();
+        final int NUMBER_OF_FILES=files.size();
         List<DocIndex> allDocuments = new ArrayList<>();
 
         // manage the pool of threads and start the SPIMI when we're done.
@@ -189,9 +191,8 @@ public class Main {
 
 
 
-                    Tokenizer tokenizer = new Tokenizer(files[j].getAbsolutePath());
+                    Tokenizer tokenizer = new Tokenizer(files.get(j).getAbsolutePath());
                     tokenizer.readDocuments();
-
                     allDocuments.addAll(tokenizer.getDocumentList());
                 }
                 };
